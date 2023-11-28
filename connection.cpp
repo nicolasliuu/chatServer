@@ -45,7 +45,13 @@ bool Connection::send(const Message &msg) {
   // TODO: send a message
   // return true if successful, false if not
   // make sure that m_last_result is set appropriately
-  rio_writen(m_fd, msg.getMessage().c_str(), sizeof(std::string));
+  if (rio_writen(m_fd, msg.getMessage().c_str(), sizeof(std::string)) == -1) {
+    m_last_result = EOF_OR_ERROR;
+    return false;
+  } else {
+    m_last_result = SUCCESS;
+    return true;
+  }
 }
 
 bool Connection::receive(Message &msg) {

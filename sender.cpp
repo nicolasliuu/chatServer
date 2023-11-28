@@ -23,14 +23,20 @@ int main(int argc, char **argv) {
 
   Connection conn;
 
-  // TODO: connect to server
+  // Connect to server
   conn.connect(server_hostname, server_port);
+  
+  // Send slogin message
+  conn.send(Message(TAG_SLOGIN, username));
+  
 
-  // TODO: send slogin message
-  conn.send(Message("slogin", username));//is this how u make a new message object?? i forgor how to write c++
 
   // TODO: loop reading commands from user, sending messages to
   //       server as appropriate
+
+  while (1) {
+
+  }
 
   return 0;
 }
