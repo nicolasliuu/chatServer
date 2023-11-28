@@ -53,5 +53,10 @@ bool Connection::receive(Message &msg) {
   // return true if successful, false if not
   // make sure that m_last_result is set appropriately
   char buffer[msg.MAX_LEN];
-  rio_readlineb(&m_fdbuf, buffer, msg.MAX_LEN);
+  if (rio_readlineb(&m_fdbuf, buffer, msg.MAX_LEN) == -1) {
+    m_last_result = EOF_OR_ERROR;
+    return false;
+  }
+  m_last_result = SUCCESS;
+  return true;
 }

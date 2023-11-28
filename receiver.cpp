@@ -30,7 +30,9 @@ int main(int argc, char **argv) {
 
   // TODO: loop waiting for messages from server
   //       (which should be tagged with TAG_DELIVERY)
-
+  while(1) { //infinite loop, exit when ctrl+c
+    
+  }
 
   return 0;
 }
