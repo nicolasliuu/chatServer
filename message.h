@@ -20,6 +20,9 @@ struct Message {
     : tag(tag), data(data) { }
 
   // TODO: you could add helper functions
+  std::string getMessage() const{
+    return tag + ":" + data + "\n";
+  }
 };
 
 // standard message tags (note that you don't need to worry about

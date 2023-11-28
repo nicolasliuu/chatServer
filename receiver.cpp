@@ -25,6 +25,8 @@ int main(int argc, char **argv) {
 
   // TODO: send rlogin and join messages (expect a response from
   //       the server for each one)
+  conn.send(Message("rlogin", username));
+  conn.send(Message("join", room_name));
 
   // TODO: loop waiting for messages from server
   //       (which should be tagged with TAG_DELIVERY)
