@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
   std::string room_name = argv[4];
 
   Connection conn;
+  Message response;
 
   // TODO: connect to server
   conn.connect(server_hostname, server_port);
@@ -26,12 +27,14 @@ int main(int argc, char **argv) {
   // TODO: send rlogin and join messages (expect a response from
   //       the server for each one)
   conn.send(Message(TAG_RLOGIN, username));
-  conn.send(Message(TAG_JOIN, room_name));
+  conn.receive(response);
+  if (response.tag == TAG_OK) {
+    conn.send(Message(TAG_JOIN, room_name));//only send join message after getting ok
+  }
 
   // TODO: loop waiting for messages from server
   //       (which should be tagged with TAG_DELIVERY)
   while (true) { //infinite loop, exit when ctrl+c
-    Message response;
     conn.receive(response);
     //response contains delivery:[room]:[sender]:[message]
     //check that response contains delivery tag
@@ -47,9 +50,7 @@ int main(int argc, char **argv) {
       sender = data.substr(0, colonPos);
       data = data.substr(colonPos + 1);//[message]
       message = data;
-      if (room.compare(room_name) == 0) {
-        std::cout << sender << ": " << message;
-      }
+      std::cout << sender << ": " << message << "\n";
     }
     //parse response.data to get room, sender, and message
     //check that room and sender in response match room and sender in args
