@@ -25,13 +25,36 @@ int main(int argc, char **argv) {
 
   // TODO: send rlogin and join messages (expect a response from
   //       the server for each one)
-  conn.send(Message("rlogin", username));
-  conn.send(Message("join", room_name));
+  conn.send(Message(TAG_RLOGIN, username));
+  conn.send(Message(TAG_JOIN, room_name));
 
   // TODO: loop waiting for messages from server
   //       (which should be tagged with TAG_DELIVERY)
-  while(1) { //infinite loop, exit when ctrl+c
-    
+  while (true) { //infinite loop, exit when ctrl+c
+    Message response;
+    conn.receive(response);
+    //response contains delivery:[room]:[sender]:[message]
+    //check that response contains delivery tag
+    if (response.tag == TAG_DELIVERY) {
+      std::string room;
+      std::string sender;
+      std::string message;
+      std::string data = response.data;//[room]:[sender]:[message]
+      size_t colonPos = data.find(':');
+      room = data.substr(0, colonPos);
+      data = data.substr(colonPos + 1);//[sender]:[message]
+      colonPos = data.find(':');
+      sender = data.substr(0, colonPos);
+      data = data.substr(colonPos + 1);//[message]
+      message = data;
+      if (room.compare(room_name) == 0) {
+        std::cout << sender << ": " << message;
+      }
+    }
+    //parse response.data to get room, sender, and message
+    //check that room and sender in response match room and sender in args
+    //cout [username of sender]: [message text]
+
   }
 
   return 0;
