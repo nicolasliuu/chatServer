@@ -54,19 +54,6 @@ bool Connection::send(const Message &msg) {
   }
 }
 
-// bool Connection::receive(Message &msg) {
-//   // TODO: receive a message, storing its tag and data in msg
-//   // return true if successful, false if not
-//   // make sure that m_last_result is set appropriately
-//   char buffer[msg.MAX_LEN];
-//   if (rio_readlineb(&m_fdbuf, buffer, msg.MAX_LEN) == -1) {
-//     m_last_result = EOF_OR_ERROR;
-//     return false;
-//   }
-//   m_last_result = SUCCESS;
-//   return true;
-// }
-
 bool Connection::receive(Message &msg) {
 
   char buffer[Message::MAX_LEN + 1] = {0};

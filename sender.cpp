@@ -40,8 +40,9 @@ int main(int argc, char **argv) {
   if (!conn.receive(response)) {
     std::cerr << "Error: could not receive response from server\n";
     return 1;
-  } else if (response.tag != TAG_OK) {
-    std::cerr << "Error: " << response.data << "\n";
+  }
+  if (response.tag == TAG_ERR) {
+    std::cerr << response.data << "\n";
     return 1;
   } 
 
@@ -85,8 +86,7 @@ int main(int argc, char **argv) {
       std::cerr << "No connection to server.\n";
       return 1;
     } else if (response.tag == TAG_ERR) {
-      std::cerr << "Error: " << response.data << "\n";
-      return 1;
+      std::cerr << response.data << "\n";
     } else if (response.tag == TAG_OK || response.tag == TAG_DELIVERY) {
       // Do nothing here
     } else {
