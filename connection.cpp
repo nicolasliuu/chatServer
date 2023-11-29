@@ -45,7 +45,7 @@ bool Connection::send(const Message &msg) {
   // TODO: send a message
   // return true if successful, false if not
   // make sure that m_last_result is set appropriately
-  if (rio_writen(m_fd, msg.getMessage().c_str(), sizeof(std::string)) == -1) {
+  if (rio_writen(m_fd, msg.getMessage().c_str(), msg.getMessage().length()) == -1) {
     m_last_result = EOF_OR_ERROR;
     return false;
   } else {
@@ -54,15 +54,49 @@ bool Connection::send(const Message &msg) {
   }
 }
 
+// bool Connection::receive(Message &msg) {
+//   // TODO: receive a message, storing its tag and data in msg
+//   // return true if successful, false if not
+//   // make sure that m_last_result is set appropriately
+//   char buffer[msg.MAX_LEN];
+//   if (rio_readlineb(&m_fdbuf, buffer, msg.MAX_LEN) == -1) {
+//     m_last_result = EOF_OR_ERROR;
+//     return false;
+//   }
+//   m_last_result = SUCCESS;
+//   return true;
+// }
+
 bool Connection::receive(Message &msg) {
-  // TODO: receive a message, storing its tag and data in msg
-  // return true if successful, false if not
-  // make sure that m_last_result is set appropriately
-  char buffer[msg.MAX_LEN];
-  if (rio_readlineb(&m_fdbuf, buffer, msg.MAX_LEN) == -1) {
+
+  char buffer[Message::MAX_LEN + 1] = {0};
+  if (rio_readlineb(&m_fdbuf, buffer, Message::MAX_LEN) == -1) {
     m_last_result = EOF_OR_ERROR;
     return false;
   }
+
+  // Create a tag with the buffer 
+  std::string receivedMsg(buffer);
+  size_t colonPos = receivedMsg.find(':');
+  if (colonPos == std::string::npos || colonPos == receivedMsg.length() - 1) {
+    m_last_result = INVALID_MSG;
+    return false;
+  }
+
+  std::string tag = receivedMsg.substr(0, colonPos);
+  std::string data = receivedMsg.substr(colonPos + 1);
+
+  // Remove the trailing newline character
+  if (!data.empty() && data.back() == '\n') {
+    data.pop_back();
+  }
+
+  if (!data.empty() && data.back() == '\r') {
+    data.pop_back();
+  }
+
+  msg.tag = tag;
+  msg.data = data;
   m_last_result = SUCCESS;
   return true;
 }
