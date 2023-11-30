@@ -23,18 +23,41 @@ int main(int argc, char **argv) {
 
   // TODO: connect to server
   conn.connect(server_hostname, server_port);
+  if (!conn.is_open()) {
+    std::cerr << "Error: could not connect to server\n";
+    return 1;
+  }
 
   // TODO: send rlogin and join messages (expect a response from
   //       the server for each one)
   conn.send(Message(TAG_RLOGIN, username));
-  conn.receive(response);
+  if (!conn.receive(response)) {
+    std::cerr << "Error: could not receive response from server\n";
+    return 1;
+  }
+  if (response.tag == TAG_ERR) {
+    std::cerr << response.data << "\n";
+    return 1;
+  }
   if (response.tag == TAG_OK) {
     conn.send(Message(TAG_JOIN, room_name));//only send join message after getting ok
+    if (!conn.receive(response)) {
+      std::cerr << "Error: could not receive response from server\n";
+      return 1;
+    }
+    if (response.tag == TAG_ERR) {
+      std::cerr << response.data << "\n";
+      return 1;
+    }
   }
 
   // TODO: loop waiting for messages from server
   //       (which should be tagged with TAG_DELIVERY)
   while (true) { //infinite loop, exit when ctrl+c
+    if (!conn.is_open()) {
+      std::cerr << "Error: connection closed\n";
+      return 1;
+    }
     conn.receive(response);
     //response contains delivery:[room]:[sender]:[message]
     //check that response contains delivery tag
