@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
         std::string room;
         room = input.substr(6); // Get room name 
         conn.send(Message(TAG_JOIN, room));
-      } else if (input.substr(0, 6) == "/leave") {
+      } else if (input.substr(0, 6) == "/leave") { 
         conn.send(Message(TAG_LEAVE, ""));
       } else {
         std::cerr << "Error: Invalid command\n";

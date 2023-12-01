@@ -37,7 +37,7 @@ void Connection::close() {
 
 bool Connection::send(const Message &msg) {
   // return true if successful, false if not
-  // make sure that m_last_result is set appropriately
+  // Sets m_last_result to the appropriate value
   if (rio_writen(m_fd, msg.getMessage().c_str(), msg.getMessage().length()) == -1) {
     m_last_result = EOF_OR_ERROR;
     return false;
@@ -55,7 +55,7 @@ bool Connection::receive(Message &msg) {
     return false;
   }
 
-  // Create a tag with the buffer 
+  // Create a tag with the buffer by finding the first colon and parsing it accordingly.
   std::string receivedMsg(buffer);
   size_t colonPos = receivedMsg.find(':');
   if (colonPos == std::string::npos || colonPos == receivedMsg.length() - 1) {
