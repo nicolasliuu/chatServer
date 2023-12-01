@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   } 
 
 
-  // TODO: loop reading commands from user, sending messages to
+  //loop reading commands from user, sending messages to
   //       server as appropriate
 
   std::string input;

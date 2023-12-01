@@ -21,15 +21,12 @@ int main(int argc, char **argv) {
   Connection conn;
   Message response;
 
-  // TODO: connect to server
   conn.connect(server_hostname, server_port);
   if (!conn.is_open()) {
     std::cerr << "Error: could not connect to server\n";
     return 1;
   }
 
-  // TODO: send rlogin and join messages (expect a response from
-  //       the server for each one)
   conn.send(Message(TAG_RLOGIN, username));
   if (!conn.receive(response)) {
     std::cerr << "Error: could not receive response from server\n";
@@ -51,8 +48,6 @@ int main(int argc, char **argv) {
     }
   }
 
-  // TODO: loop waiting for messages from server
-  //       (which should be tagged with TAG_DELIVERY)
   while (true) { //infinite loop, exit when ctrl+c
     if (!conn.is_open()) {
       std::cerr << "Error: connection closed\n";
@@ -65,6 +60,7 @@ int main(int argc, char **argv) {
       std::string room;
       std::string sender;
       std::string message;
+    //parse response.data to get room, sender, and message
       std::string data = response.data;//[room]:[sender]:[message]
       size_t colonPos = data.find(':');
       room = data.substr(0, colonPos);
@@ -73,11 +69,8 @@ int main(int argc, char **argv) {
       sender = data.substr(0, colonPos);
       data = data.substr(colonPos + 1);//[message]
       message = data;
-      std::cout << sender << ": " << message << "\n";
+      std::cout << sender << ": " << message << "\n";//cout [username of sender]: [message text]    
     }
-    //parse response.data to get room, sender, and message
-    //check that room and sender in response match room and sender in args
-    //cout [username of sender]: [message text]
 
   }
 
