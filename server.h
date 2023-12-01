@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <pthread.h>
+#include "connection.h"
 class Room;
 
 class Server {
@@ -30,7 +31,13 @@ private:
   int m_ssock;
   RoomMap m_rooms;
   pthread_mutex_t m_lock;
-  struct thread;
+};
+
+struct ConnInfo {
+  //connection object
+  Connection *conn;
+  //server pointer
+  Server *server;
 };
 
 #endif // SERVER_H

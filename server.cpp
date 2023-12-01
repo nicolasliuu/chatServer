@@ -68,15 +68,19 @@ bool Server::listen() {
 void Server::handle_client_requests() {
   // TODO: infinite loop calling accept or Accept, starting a new
   //       pthread for each connected client
-
+  while(true)  {
+    //pthread create, pass in conninfo struct
+    //create a pthread_t pointer
+    //pthread_Attr should be null
+    //void* (*)(void*) pass in worker()
+    //void* pass in conninfo struct
+    pthread_t thread;
+    struct ConnInfo *connectionInfo = new struct ConnInfo;
+    pthread_create(&thread, NULL, worker, connectionInfo);
+  }
 }
 
 Room *Server::find_or_create_room(const std::string &room_name) {
   // TODO: return a pointer to the unique Room object representing
   //       the named chat room, creating a new one if necessary
 }
-
-struct Server::thread {
-
-};
-
