@@ -30,6 +30,7 @@ private:
   int m_ssock;
   RoomMap m_rooms;
   pthread_mutex_t m_lock;
+  struct thread;
 };
 
 #endif // SERVER_H

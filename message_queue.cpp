@@ -1,5 +1,6 @@
 #include <cassert>
 #include <ctime>
+#include "guard.h"
 #include "message_queue.h"
 
 MessageQueue::MessageQueue() {
