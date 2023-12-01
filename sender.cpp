@@ -46,21 +46,18 @@ int main(int argc, char **argv) {
     return 1;
   } 
 
-
-  //loop reading commands from user, sending messages to
-  //       server as appropriate
-
+  // Loop to read commands from user and send messages to server as appropriate
   std::string input;
 
   while (true) {
     std::cout << "> ";
     std::getline(std::cin, input);
-    std::istringstream iss(input);
 
     if (input.empty()) {
       continue;
     }
 
+    // If the input starts with '/' then it's a command, otherwise it's a message.
     if (input[0] == '/') {
       // Handle command
       if (input == "/quit") {
@@ -68,20 +65,21 @@ int main(int argc, char **argv) {
         if (conn.receive(response) && response.tag == TAG_OK) {
           return 0;
         } 
-       } else if (input.substr(0, 5) == "/join") {
+      } else if (input.substr(0, 5) == "/join") {
         std::string room;
-        room = input.substr(6);
+        room = input.substr(6); // Get room name 
         conn.send(Message(TAG_JOIN, room));
-      } else if (input.substr(0, 6) == "/leave") {
+      } else if (input.substr(0, 6) == "/leave") { 
         conn.send(Message(TAG_LEAVE, ""));
       } else {
         std::cerr << "Error: Invalid command\n";
       }
     } else {
-      // Handle message
+      // It's a message, send it to the server
       conn.send(Message(TAG_SENDALL, input));
     }
 
+    // Handle server response
     if (!conn.receive(response)) {
       std::cerr << "No connection to server.\n";
       return 1;
