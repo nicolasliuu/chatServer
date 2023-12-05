@@ -69,6 +69,12 @@ void Server::handle_client_requests() {
   // TODO: infinite loop calling accept or Accept, starting a new
   //       pthread for each connected client
   while(true)  {
+    Connection *conn = Accept(m_ssock, NULL, NULL);
+    if (conn == NULL) {
+      std::cerr << "Error accepting connection" << std::endl;
+      continue;
+    }
+
     //pthread create, pass in conninfo struct
     //create a pthread_t pointer
     //pthread_Attr should be null
@@ -76,6 +82,8 @@ void Server::handle_client_requests() {
     //void* pass in conninfo struct
     pthread_t thread;
     struct ConnInfo *connectionInfo = new struct ConnInfo;
+    connectionInfo->conn = conn;
+    connectionInfo->server = this;
     pthread_create(&thread, NULL, worker, connectionInfo);
   }
 }
