@@ -28,6 +28,8 @@ namespace {
 
 void *worker(void *arg) {
   pthread_detach(pthread_self());
+  //create new user object
+  //call Room::add_member
 
   // TODO: use a static cast to convert arg from a void* to
   //       whatever pointer type describes the object(s) needed
@@ -65,6 +67,34 @@ bool Server::listen() {
   //       if successful, false if not
 }
 
+void chat_with_receiver(Connection *conn) {  
+    //receive message
+    Message msg;
+    conn->receive(msg);
+    //get username from message, pass it in when creating user object
+    //parse message to get username and room
+    //should receive message in form of delivery:[room]:[sender]:[message]
+    std::string room;
+    std::string username;
+    std::string message;
+    if (msg.tag == TAG_DELIVERY) {
+    //parse msg.data to get room, sender, and message
+      std::string data = msg.data;//[room]:[sender]:[message]
+      size_t colonPos = data.find(':');
+      room = data.substr(0, colonPos);
+      data = data.substr(colonPos + 1);//[sender]:[message]
+      colonPos = data.find(':');
+      username = data.substr(0, colonPos);
+      data = data.substr(colonPos + 1);//[message]
+      message = data;
+    }    
+    User user(username);
+    //create room
+    Room r(room);
+    //call Room::add_member
+    //r.add_member(user);
+}
+
 void Server::handle_client_requests() {
   while (1)  {
     int clientfd = Accept(m_ssock, NULL, NULL);
@@ -93,6 +123,7 @@ void Server::handle_client_requests() {
       delete connectionInfo;
       continue;
     };
+
   }
 }
 

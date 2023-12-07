@@ -38,6 +38,8 @@ struct ConnInfo {
   Connection *conn;
   //server pointer
   Server *server;
+  //username
+  std::string username;//unnecessary?
 };
 
 #endif // SERVER_H
