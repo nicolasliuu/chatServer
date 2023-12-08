@@ -30,6 +30,7 @@ void *worker(void *arg) {
   pthread_detach(pthread_self());
   //create new user object
   //call Room::add_member
+  //call chat with sender/receiver somewhere in this function
 
   // TODO: use a static cast to convert arg from a void* to
   //       whatever pointer type describes the object(s) needed
@@ -56,21 +57,28 @@ Server::Server(int port)
   : m_port(port)
   , m_ssock(-1) {
   // TODO: initialize mutex
+  pthread_mutex_init(&m_lock, NULL);//pass m_lock
 }
 
 Server::~Server() {
   // TODO: destroy mutex
+  pthread_mutex_destroy(&m_lock);//put an object in the parameter
 }
 
 bool Server::listen() {
   // TODO: use open_listenfd to create the server socket, return true
   //       if successful, false if not
+  int fd = open_listenfd((char*)(m_port)); 
+  if (fd >= 0) {
+    return true;
+  }
+  return false;
 }
 
-void chat_with_receiver(Connection *conn) {  
+void chat_with_receiver(struct ConnInfo *connectionInfo) {  
     //receive message
     Message msg;
-    conn->receive(msg);
+    connectionInfo->conn->receive(msg);
     //get username from message, pass it in when creating user object
     //parse message to get username and room
     //should receive message in form of delivery:[room]:[sender]:[message]
