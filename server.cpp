@@ -130,4 +130,17 @@ void Server::handle_client_requests() {
 Room *Server::find_or_create_room(const std::string &room_name) {
   // TODO: return a pointer to the unique Room object representing
   //       the named chat room, creating a new one if necessary
+  //iterate thru all the rooms (m_rooms) to check if the room of the given name already exists
+  //if name is unique, create a new room and return a pointer to it
+  //if room already exists, return a pointer to the existing room
+  std::map<std::string, Room*>::iterator it;
+  for(it = m_rooms.begin(); it != m_rooms.end(); it++) {
+    std::string currentRoomName = it->second->get_room_name();
+    if (currentRoomName.compare(room_name) == 0) {
+      return it->second;//the room already exists
+    }    
+  }
+  //the room doesn't exist, create a new room
+  m_rooms[room_name] = new Room(room_name);
+  return m_rooms[room_name];
 }
