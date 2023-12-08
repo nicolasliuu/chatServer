@@ -35,9 +35,22 @@ void *worker(void *arg) {
   // TODO: use a static cast to convert arg from a void* to
   //       whatever pointer type describes the object(s) needed
   //       to communicate with a client (sender or receiver)
+  //convert arg to connectioninfo
+  ConnInfo *connectionInfo = static_cast<ConnInfo*> (arg);
 
   // TODO: read login message (should be tagged either with
   //       TAG_SLOGIN or TAG_RLOGIN), send response
+  //receive message
+  Message msg;
+  connectionInfo->conn->receive(msg);
+  std::string room;
+  std::string username;
+  std::string message;
+  if (msg.tag == TAG_RLOGIN) {
+    chat_with_receiver(connectionInfo);
+  } else if (msg.tag == TAG_SLOGIN) {
+    //call chat with sender
+  }
 
   // TODO: depending on whether the client logged in as a sender or
   //       receiver, communicate with the client (implementing
@@ -76,31 +89,33 @@ bool Server::listen() {
 }
 
 void chat_with_receiver(struct ConnInfo *connectionInfo) {  
-    //receive message
-    Message msg;
-    connectionInfo->conn->receive(msg);
-    //get username from message, pass it in when creating user object
-    //parse message to get username and room
-    //should receive message in form of delivery:[room]:[sender]:[message]
-    std::string room;
-    std::string username;
-    std::string message;
-    if (msg.tag == TAG_DELIVERY) {
-    //parse msg.data to get room, sender, and message
-      std::string data = msg.data;//[room]:[sender]:[message]
-      size_t colonPos = data.find(':');
-      room = data.substr(0, colonPos);
-      data = data.substr(colonPos + 1);//[sender]:[message]
-      colonPos = data.find(':');
-      username = data.substr(0, colonPos);
-      data = data.substr(colonPos + 1);//[message]
-      message = data;
-    }    
-    User user(username);
-    //create room
-    Room r(room);
-    //call Room::add_member
-    //r.add_member(user);
+  //receive message
+  Message msg;
+  connectionInfo->conn->receive(msg);
+  //get username from message, pass it in when creating user object
+  //parse message to get username and room
+  //should receive message in form of delivery:[room]:[sender]:[message]
+  std::string room;
+  std::string username;
+  std::string message;
+  if (msg.tag == TAG_DELIVERY) {
+  //parse msg.data to get room, sender, and message
+    std::string data = msg.data;//[room]:[sender]:[message]
+    size_t colonPos = data.find(':');
+    room = data.substr(0, colonPos);
+    data = data.substr(colonPos + 1);//[sender]:[message]
+    colonPos = data.find(':');
+    username = data.substr(0, colonPos);
+    data = data.substr(colonPos + 1);//[message]
+    message = data;
+  }    
+  User *user = new User(username);
+  //create room
+  Room r(room);
+  //call Room::add_member
+  r.add_member(user);
+  //continuously receive messages
+  
 }
 
 void Server::handle_client_requests() {
