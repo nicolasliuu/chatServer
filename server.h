@@ -20,6 +20,8 @@ public:
 
   void chat_with_receiver(struct ConnInfo *connectionInfo);
 
+  void chat_with_sender(struct ConnInfo *connectionInfo);
+
 private:
   // prohibit value semantics
   Server(const Server &);

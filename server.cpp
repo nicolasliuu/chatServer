@@ -114,15 +114,24 @@ void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {
     username = data.substr(0, colonPos);
     data = data.substr(colonPos + 1);//[message]
     message = data;
-  }    
-  User *user = new User(username);
-  //create room
-  Room r(room);
-  //call Room::add_member
-  r.add_member(user);
-  connectionInfo->conn->send(Message(TAG_OK, "welcome"));
-  //continuously receive messages
-  
+    // //send output message
+    // User *user = new User(username);
+    // //create room
+    // Room *r = find_or_create_room(room);
+    // //call Room::add_member
+    // r->add_member(user);
+    // r->broadcast_message(username, message); //output message
+    connectionInfo->conn->send(Message(TAG_SENDALL, message)); //probably not the right tag
+  } else if (msg.tag == TAG_JOIN) {
+    User *user = new User(connectionInfo->username);
+    // Register sender to room
+    room = msg.data;
+    // Find or create the room
+    Room *r = find_or_create_room(room);
+    // Add the member using our username
+    r->add_member(user);
+    connectionInfo->conn->send(Message(TAG_OK, "joined " + room));
+  }
 }
 
 void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
@@ -156,7 +165,7 @@ void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
         connectionInfo->conn->close();
         // Exit thread
         pthread_exit(NULL);
-    } else {
+    } else { //SENDALL
       // Synch and broadcast message to all members of the room
 
 
@@ -185,6 +194,7 @@ void Server::handle_client_requests() {
     struct ConnInfo *connectionInfo = new struct ConnInfo;
     connectionInfo->conn = conn;
     connectionInfo->server = this;
+    //need to also set username
     /* start new thread to handle client connection */
     pthread_t thread;
     if (pthread_create(&thread, NULL, worker, connectionInfo) != 0) {
