@@ -51,7 +51,9 @@ void *worker(void *arg) {
     connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data));
     server->chat_with_receiver(connectionInfo);
   } else if (msg.tag == TAG_SLOGIN) {
-    //call chat with sender
+    connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data));
+    connectionInfo->username = msg.data;
+    server->chat_with_sender(connectionInfo);
   }
 
   // TODO: depending on whether the client logged in as a sender or
@@ -121,6 +123,45 @@ void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {
   connectionInfo->conn->send(Message(TAG_OK, "welcome"));
   //continuously receive messages
   
+}
+
+void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
+  while (1) {
+    Message msg; 
+    std::string room;
+    User *user = new User(connectionInfo->username);
+    connectionInfo->conn->receive(msg);
+    if (msg.tag == TAG_JOIN) {
+      // Register sender to room
+      room = msg.data;
+      // Find or create the room
+      Room *r = find_or_create_room(room);
+      // Add the member using our username
+      r->add_member(user);
+      connectionInfo->conn->send(Message(TAG_OK, "joined " + room));
+    } else if (msg.tag == TAG_LEAVE) {
+      // De-register sender from room
+      room = msg.data;
+      // Find the room
+      Room *r = find_or_create_room(room);
+      // Remove the member using username
+      r->remove_member(user);
+      connectionInfo->conn->send(Message(TAG_OK, "left " + room));
+    } else if (msg.tag == TAG_QUIT) {
+        // Destroy connection data
+        delete connectionInfo;
+        // Destroy user data
+        delete user;
+        // Close connection
+        connectionInfo->conn->close();
+        // Exit thread
+        pthread_exit(NULL);
+    } else {
+      // Synch and broadcast message to all members of the room
+
+
+    }
+  }
 }
 
 void Server::handle_client_requests() {
