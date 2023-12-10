@@ -18,6 +18,8 @@ public:
 
   Room *find_or_create_room(const std::string &room_name);
 
+  void chat_with_receiver(struct ConnInfo *connectionInfo);
+
 private:
   // prohibit value semantics
   Server(const Server &);

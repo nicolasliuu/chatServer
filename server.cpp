@@ -37,6 +37,7 @@ void *worker(void *arg) {
   //       to communicate with a client (sender or receiver)
   //convert arg to connectioninfo
   ConnInfo *connectionInfo = static_cast<ConnInfo*> (arg);
+  Server *server = connectionInfo->server;
 
   // TODO: read login message (should be tagged either with
   //       TAG_SLOGIN or TAG_RLOGIN), send response
@@ -47,7 +48,8 @@ void *worker(void *arg) {
   std::string username;
   std::string message;
   if (msg.tag == TAG_RLOGIN) {
-    chat_with_receiver(connectionInfo);
+    connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data));
+    server->chat_with_receiver(connectionInfo);
   } else if (msg.tag == TAG_SLOGIN) {
     //call chat with sender
   }
@@ -81,14 +83,16 @@ Server::~Server() {
 bool Server::listen() {
   // TODO: use open_listenfd to create the server socket, return true
   //       if successful, false if not
-  int fd = open_listenfd((char*)(m_port)); 
+  const char* port_str = std::to_string(m_port).c_str();
+  int fd = open_listenfd(port_str);
+  m_ssock = fd;
   if (fd >= 0) {
     return true;
   }
   return false;
 }
 
-void chat_with_receiver(struct ConnInfo *connectionInfo) {  
+void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {  
   //receive message
   Message msg;
   connectionInfo->conn->receive(msg);
@@ -114,6 +118,7 @@ void chat_with_receiver(struct ConnInfo *connectionInfo) {
   Room r(room);
   //call Room::add_member
   r.add_member(user);
+  connectionInfo->conn->send(Message(TAG_OK, "welcome"));
   //continuously receive messages
   
 }
