@@ -153,7 +153,7 @@ void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
       room = find_or_create_room(roomName);
       // Add the member using our username
       room->add_member(user);
-      if (!connectionInfo->conn->send(Message(TAG_OK, "joined " + room))) {
+      if (!connectionInfo->conn->send(Message(TAG_OK, "joined " + roomName))) {
         delete user;
         delete connectionInfo;
         break;
@@ -164,7 +164,7 @@ void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
       room = find_or_create_room(roomName);
       // Remove the member using username
       room->remove_member(user);
-      if (!connectionInfo->conn->send(Message(TAG_OK, "left " + room))) {
+      if (!connectionInfo->conn->send(Message(TAG_OK, "left " + roomName))) {
         delete user;
         delete connectionInfo;
         break;
@@ -191,10 +191,10 @@ void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
           break;
         }
       } else {
-        connectionInfo->conn->send(Message(TAG_ERROR, "Room not found"));
+        connectionInfo->conn->send(Message(TAG_ERR, "Room not found"));
       }
     } else {
-      connectionInfo->conn->send(Message(TAG_ERROR, "invalid command"));
+      connectionInfo->conn->send(Message(TAG_ERR, "invalid command"));
       break;
     }
   }
