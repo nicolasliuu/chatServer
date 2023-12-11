@@ -100,7 +100,6 @@ void Server::chat_with_receiver(User *user, struct ConnInfo *connectionInfo) {
   std::string roomName;
   std::string username;
   Message msg;
-  Room *room;
 
   if (!connectionInfo->conn->receive(msg)){
     connectionInfo->conn->send(Message(TAG_ERR, "invalid command"));
@@ -108,7 +107,7 @@ void Server::chat_with_receiver(User *user, struct ConnInfo *connectionInfo) {
     delete connectionInfo;
     return;
   }
-  if (message.tag != TAG_JOIN) {
+  if (msg.tag != TAG_JOIN) {
     connectionInfo->conn->send(Message(TAG_ERR, "invalid command"));
   }
   if (msg.tag == TAG_JOIN) {
@@ -124,11 +123,11 @@ void Server::chat_with_receiver(User *user, struct ConnInfo *connectionInfo) {
   // While loop to send messages to receiver, formatted delivery:[room]:[sender]:[message]
   while (1) {
     // Dequeue messages from User's message queue.
-    Message msg; 
+    Message *msg; 
     msg = user->mqueue.dequeue();
     if (msg != nullptr) {
       // Send message to receiver
-      if (!connectionInfo->conn->send(msg)) {
+      if (!connectionInfo->conn->send(*msg)) {
         // Destroy connection data
           delete connectionInfo->conn;
           delete connectionInfo; // Closes the conneciton
@@ -142,7 +141,6 @@ void Server::chat_with_receiver(User *user, struct ConnInfo *connectionInfo) {
 
 void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
   // Create user object before entering loop
-  User *user = new User(connectionInfo->username);
   std::string roomName;
   Room *room;
   while (1) {
