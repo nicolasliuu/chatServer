@@ -95,42 +95,48 @@ bool Server::listen() {
 }
 
 void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {  
-  //receive message
-  Message msg;
-  connectionInfo->conn->receive(msg);
   //get username from message, pass it in when creating user object
   //parse message to get username and room
   //should receive message in form of delivery:[room]:[sender]:[message]
-  std::string room;
+  std::string roomName;
   std::string username;
   std::string message;
-  if (msg.tag == TAG_DELIVERY) {
-  //parse msg.data to get room, sender, and message
-    std::string data = msg.data;//[room]:[sender]:[message]
-    size_t colonPos = data.find(':');
-    room = data.substr(0, colonPos);
-    data = data.substr(colonPos + 1);//[sender]:[message]
-    colonPos = data.find(':');
-    username = data.substr(0, colonPos);
-    data = data.substr(colonPos + 1);//[message]
-    message = data;
-    // //send output message
-    // User *user = new User(username);
-    // //create room
-    // Room *r = find_or_create_room(room);
-    // //call Room::add_member
-    // r->add_member(user);
-    // r->broadcast_message(username, message); //output message
-    connectionInfo->conn->send(Message(TAG_SENDALL, message)); //probably not the right tag
-  } else if (msg.tag == TAG_JOIN) {
-    User *user = new User(connectionInfo->username);
-    // Register sender to room
-    room = msg.data;
-    // Find or create the room
-    Room *r = find_or_create_room(room);
-    // Add the member using our username
-    r->add_member(user);
-    connectionInfo->conn->send(Message(TAG_OK, "joined " + room));
+
+  Room *room;
+  while (1) {
+    //receive message
+    Message msg;
+    connectionInfo->conn->receive(msg);
+    std::cout << msg.tag << "\n";
+    
+    if (msg.tag == TAG_DELIVERY) {
+    //parse msg.data to get room, sender, and message
+      std::string data = msg.data;//[room]:[sender]:[message]
+      size_t colonPos = data.find(':');
+      roomName = data.substr(0, colonPos);
+      data = data.substr(colonPos + 1);//[sender]:[message]
+      colonPos = data.find(':');
+      username = data.substr(0, colonPos);
+      data = data.substr(colonPos + 1);//[message]
+      message = data;
+      //send output message
+      // User *user = new User(username);
+      //create room
+      room = find_or_create_room(roomName);
+      //call Room::add_member
+      // r->add_member(user);
+      room->broadcast_message(username, message); //output message
+      // connectionInfo->conn->send(Message(TAG_SENDALL, message)); //probably not the right tag
+    } else if (msg.tag == TAG_JOIN) {
+      User *user = new User(connectionInfo->username);
+      // Register sender to room
+      roomName = msg.data;
+      // Find or create the room
+      Room *r = find_or_create_room(roomName);
+      // Add the member using our username
+      r->add_member(user);
+      connectionInfo->conn->send(Message(TAG_OK, "joined " + roomName));
+    }
   }
 }
 
