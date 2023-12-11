@@ -170,11 +170,15 @@ void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
         break;
       }
     } else if (msg.tag == TAG_QUIT) {
+      // De-register sender from room
+      // Find the room
+      room = find_or_create_room(roomName);
+      room->remove_member(user);
         // Destroy connection data
         delete connectionInfo;
         // Destroy user data
         delete user;
-        // Close connection
+        // Close connectionk
         connectionInfo->conn->close();
         // Exit thread
         pthread_exit(NULL);
