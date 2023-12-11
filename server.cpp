@@ -95,9 +95,6 @@ bool Server::listen() {
 }
 
 void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {  
-  //receive message
-  Message msg;
-  connectionInfo->conn->receive(msg);
   //get username from message, pass it in when creating user object
   //parse message to get username and room
   //should receive message in form of delivery:[room]:[sender]:[message]
@@ -110,6 +107,8 @@ void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {
     //receive message
     Message msg;
     connectionInfo->conn->receive(msg);
+    std::cout << msg.tag << "\n";
+    
     if (msg.tag == TAG_DELIVERY) {
     //parse msg.data to get room, sender, and message
       std::string data = msg.data;//[room]:[sender]:[message]
