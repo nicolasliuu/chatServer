@@ -135,27 +135,40 @@ void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {
 }
 
 void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
+  // Create user object before entering loop
+  User *user = new User(connectionInfo->username);
+  std::string roomName;
+  Room *room;
   while (1) {
     Message msg; 
-    std::string room;
-    User *user = new User(connectionInfo->username);
-    connectionInfo->conn->receive(msg);
+    if (!connectionInfo->conn->receive(msg)){
+      delete user;
+      delete connectionInfo;
+      break;
+    }
     if (msg.tag == TAG_JOIN) {
       // Register sender to room
-      room = msg.data;
+      roomName = msg.data;
       // Find or create the room
-      Room *r = find_or_create_room(room);
+      room = find_or_create_room(roomName);
       // Add the member using our username
-      r->add_member(user);
-      connectionInfo->conn->send(Message(TAG_OK, "joined " + room));
+      room->add_member(user);
+      if (!connectionInfo->conn->send(Message(TAG_OK, "joined " + room))) {
+        delete user;
+        delete connectionInfo;
+        break;
+      }
     } else if (msg.tag == TAG_LEAVE) {
       // De-register sender from room
-      room = msg.data;
       // Find the room
-      Room *r = find_or_create_room(room);
+      room = find_or_create_room(roomName);
       // Remove the member using username
-      r->remove_member(user);
-      connectionInfo->conn->send(Message(TAG_OK, "left " + room));
+      room->remove_member(user);
+      if (!connectionInfo->conn->send(Message(TAG_OK, "left " + room))) {
+        delete user;
+        delete connectionInfo;
+        break;
+      }
     } else if (msg.tag == TAG_QUIT) {
         // Destroy connection data
         delete connectionInfo;
@@ -165,10 +178,24 @@ void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
         connectionInfo->conn->close();
         // Exit thread
         pthread_exit(NULL);
-    } else { //SENDALL
+    } else if (msg.tag == TAG_SENDALL) { //SENDALL
       // Synch and broadcast message to all members of the room
-
-
+      std::string message = msg.data;
+      // Join command is issued before any chat commands, so we have to broadcast the message to the room.
+      room = find_or_create_room(roomName);
+      if (room) {
+        room->broadcast_message(connectionInfo->username, message);
+        if (!connectionInfo->conn->send(Message(TAG_OK, "sent"))) {
+          delete user;
+          delete connectionInfo;
+          break;
+        }
+      } else {
+        connectionInfo->conn->send(Message(TAG_ERROR, "Room not found"));
+      }
+    } else {
+      connectionInfo->conn->send(Message(TAG_ERROR, "invalid command"));
+      break;
     }
   }
 }
