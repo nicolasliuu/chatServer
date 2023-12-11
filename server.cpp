@@ -164,10 +164,13 @@ void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
       }
     } else if (msg.tag == TAG_LEAVE) {
       // De-register sender from room
-      // Find the room
-      room = find_or_create_room(roomName);
+      if (room == nullptr || m_rooms.find(roomName) == m_rooms.end()) {
+        connectionInfo->conn->send(Message(TAG_ERR, "not in a room"));
+        continue;
+      }
       // Remove the member using username
       room->remove_member(user);
+      room = nullptr;
       if (!connectionInfo->conn->send(Message(TAG_OK, "left " + roomName))) {
         delete user;
         delete connectionInfo;
@@ -175,31 +178,29 @@ void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
       }
     } else if (msg.tag == TAG_QUIT) {
       // De-register sender from room
-      // Find the room
-      room = find_or_create_room(roomName);
-      room->remove_member(user);
+      if (room != nullptr && m_rooms.find(roomName) != m_rooms.end()) {
+        room->remove_member(user);
+      }
         // Destroy connection data
+        connectionInfo->conn->close();
         delete connectionInfo;
         // Destroy user data
         delete user;
-        // Close connectionk
-        connectionInfo->conn->close();
         // Exit thread
         pthread_exit(NULL);
     } else if (msg.tag == TAG_SENDALL) { //SENDALL
       // Synch and broadcast message to all members of the room
       std::string message = msg.data;
       // Join command is issued before any chat commands, so we have to broadcast the message to the room.
-      room = find_or_create_room(roomName);
-      if (room) {
-        room->broadcast_message(connectionInfo->username, message);
+      if (room != nullptr) {
+        room->broadcast_message(user->username, message);
         if (!connectionInfo->conn->send(Message(TAG_OK, "sent"))) {
           delete user;
           delete connectionInfo;
           break;
         }
       } else {
-        connectionInfo->conn->send(Message(TAG_ERR, "Room not found"));
+        connectionInfo->conn->send(Message(TAG_ERR, "Not in a room"));
       }
     } else {
       connectionInfo->conn->send(Message(TAG_ERR, "invalid command"));
