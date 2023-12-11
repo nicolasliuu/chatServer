@@ -28,9 +28,6 @@ namespace {
 
 void *worker(void *arg) {
   pthread_detach(pthread_self());
-  //create new user object
-  //call Room::add_member
-  //call chat with sender/receiver somewhere in this function
 
   // TODO: use a static cast to convert arg from a void* to
   //       whatever pointer type describes the object(s) needed
@@ -49,11 +46,14 @@ void *worker(void *arg) {
   std::string message;
   if (msg.tag == TAG_RLOGIN) {
     connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data));
-    server->chat_with_receiver(connectionInfo);
+    // Initialize user with username;
+    User *user = new User(msg.data);
+    server->chat_with_receiver(user, connectionInfo);
   } else if (msg.tag == TAG_SLOGIN) {
     connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data));
-    connectionInfo->username = msg.data;
-    server->chat_with_sender(connectionInfo);
+    // Initialize user with username;
+    User *user = new User(msg.data);
+    server->chat_with_sender(user, connectionInfo);
   }
 
   // TODO: depending on whether the client logged in as a sender or
@@ -94,41 +94,24 @@ bool Server::listen() {
   return false;
 }
 
-void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {  
+void Server::chat_with_receiver(User *user, struct ConnInfo *connectionInfo) {  
   //get username from message, pass it in when creating user object
   //parse message to get username and room
-  //should receive message in form of delivery:[room]:[sender]:[message]
   std::string roomName;
   std::string username;
-  std::string message;
-
+  Message msg;
   Room *room;
-  while (1) {
-    //receive message
-    Message msg;
-    connectionInfo->conn->receive(msg);
-    std::cout << msg.tag << "\n";
-    
-    if (msg.tag == TAG_DELIVERY) {
-    //parse msg.data to get room, sender, and message
-      std::string data = msg.data;//[room]:[sender]:[message]
-      size_t colonPos = data.find(':');
-      roomName = data.substr(0, colonPos);
-      data = data.substr(colonPos + 1);//[sender]:[message]
-      colonPos = data.find(':');
-      username = data.substr(0, colonPos);
-      data = data.substr(colonPos + 1);//[message]
-      message = data;
-      //send output message
-      // User *user = new User(username);
-      //create room
-      room = find_or_create_room(roomName);
-      //call Room::add_member
-      // r->add_member(user);
-      room->broadcast_message(username, message); //output message
-      // connectionInfo->conn->send(Message(TAG_SENDALL, message)); //probably not the right tag
-    } else if (msg.tag == TAG_JOIN) {
-      User *user = new User(connectionInfo->username);
+
+  if (!connectionInfo->conn->receive(msg)){
+    connectionInfo->conn->send(Message(TAG_ERR, "invalid command"));
+    delete user;
+    delete connectionInfo;
+    return;
+  }
+  if (message.tag != TAG_JOIN) {
+    connectionInfo->conn->send(Message(TAG_ERR, "invalid command"));
+  }
+  if (msg.tag == TAG_JOIN) {
       // Register sender to room
       roomName = msg.data;
       // Find or create the room
@@ -136,11 +119,28 @@ void Server::chat_with_receiver(struct ConnInfo *connectionInfo) {
       // Add the member using our username
       r->add_member(user);
       connectionInfo->conn->send(Message(TAG_OK, "joined " + roomName));
+  }
+
+  // While loop to send messages to receiver, formatted delivery:[room]:[sender]:[message]
+  while (1) {
+    // Dequeue messages from User's message queue.
+    Message msg; 
+    msg = user->mqueue.dequeue();
+    if (msg != nullptr) {
+      // Send message to receiver
+      if (!connectionInfo->conn->send(msg)) {
+        // Destroy connection data
+          delete connectionInfo->conn;
+          delete connectionInfo; // Closes the conneciton
+          delete user;
+          delete msg;
+          break;
+      }
     }
   }
 }
 
-void Server::chat_with_sender(struct ConnInfo *connectionInfo) {
+void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
   // Create user object before entering loop
   User *user = new User(connectionInfo->username);
   std::string roomName;
