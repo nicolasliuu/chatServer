@@ -142,7 +142,7 @@ void Server::chat_with_receiver(User *user, struct ConnInfo *connectionInfo) {
 void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
   // Create user object before entering loop
   std::string roomName;
-  Room *room;
+  Room *room = nullptr;
   while (1) {
     Message msg; 
     if (!connectionInfo->conn->receive(msg)){
@@ -177,10 +177,13 @@ void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
         break;
       }
     } else if (msg.tag == TAG_QUIT) {
-      // De-register sender from room
+      // De-register sender from room and send 
       if (room != nullptr && m_rooms.find(roomName) != m_rooms.end()) {
         room->remove_member(user);
+        room = nullptr;
       }
+      // Send quit message
+      connectionInfo->conn->send(Message(TAG_OK, "quit"));
         // Destroy connection data
         connectionInfo->conn->close();
         delete connectionInfo;

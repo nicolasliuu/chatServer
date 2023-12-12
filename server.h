@@ -5,6 +5,7 @@
 #include <string>
 #include <pthread.h>
 #include "connection.h"
+#include "user.h"
 class Room;
 
 class Server {
