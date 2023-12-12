@@ -45,7 +45,11 @@ void *worker(void *arg) {
   std::string username;
   std::string message;
   if (msg.tag == TAG_RLOGIN) {
-    connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data));
+    if (!connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data))) {
+      connectionInfo->conn->close();
+      delete connectionInfo;
+      return NULL;
+    };
     // Initialize user with username;
     User *user = new User(msg.data);
     server->chat_with_receiver(user, connectionInfo);
@@ -133,19 +137,18 @@ void Server::chat_with_receiver(User *user, struct ConnInfo *connectionInfo) {
           delete connectionInfo; // Closes the conneciton
           delete user;
           delete msg;
-          break;
+          return;
       }
     }
   }
 }
 
 void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
-  // Create user object before entering loop
   std::string roomName;
   Room *room = nullptr;
   while (1) {
     Message msg; 
-    if (!connectionInfo->conn->receive(msg)){
+    if (!connectionInfo->conn->receive(msg)){ // Receive message from sender
       delete user;
       delete connectionInfo;
       break;
@@ -189,8 +192,6 @@ void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
         delete connectionInfo;
         // Destroy user data
         delete user;
-        // Exit thread
-        pthread_exit(NULL);
     } else if (msg.tag == TAG_SENDALL) { //SENDALL
       // Synch and broadcast message to all members of the room
       std::string message = msg.data;
@@ -246,11 +247,10 @@ void Server::handle_client_requests() {
 }
 
 Room *Server::find_or_create_room(const std::string &room_name) {
-  // TODO: return a pointer to the unique Room object representing
+// return a pointer to the unique Room object representing
   //       the named chat room, creating a new one if necessary
   //iterate thru all the rooms (m_rooms) to check if the room of the given name already exists
-  //if name is unique, create a new room and return a pointer to it
-  //if room already exists, return a pointer to the existing room
+
   std::map<std::string, Room*>::iterator it;
   for(it = m_rooms.begin(); it != m_rooms.end(); it++) {
     std::string currentRoomName = it->second->get_room_name();
@@ -259,6 +259,7 @@ Room *Server::find_or_create_room(const std::string &room_name) {
     }    
   }
   //the room doesn't exist, create a new room
+  Guard guard(m_lock); // Lock the mutex
   m_rooms[room_name] = new Room(room_name);
   return m_rooms[room_name];
 }
