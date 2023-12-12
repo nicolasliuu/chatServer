@@ -43,6 +43,11 @@ struct ConnInfo {
   Connection *conn;
   //server pointer
   Server *server;
+
+  ~ConnInfo() {
+    delete conn;
+  }
 };
+
 
 #endif // SERVER_H

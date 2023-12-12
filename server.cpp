@@ -45,11 +45,7 @@ void *worker(void *arg) {
   std::string username;
   std::string message;
   if (msg.tag == TAG_RLOGIN) {
-    if (!connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data))) {
-      connectionInfo->conn->close();
-      delete connectionInfo;
-      return NULL;
-    };
+    connectionInfo->conn->send(Message(TAG_OK, "logged in as " + msg.data));
     // Initialize user with username;
     User *user = new User(msg.data);
     server->chat_with_receiver(user, connectionInfo);
@@ -192,6 +188,7 @@ void Server::chat_with_sender(User *user, struct ConnInfo *connectionInfo) {
         delete connectionInfo;
         // Destroy user data
         delete user;
+        break;
     } else if (msg.tag == TAG_SENDALL) { //SENDALL
       // Synch and broadcast message to all members of the room
       std::string message = msg.data;
@@ -250,6 +247,7 @@ Room *Server::find_or_create_room(const std::string &room_name) {
 // return a pointer to the unique Room object representing
   //       the named chat room, creating a new one if necessary
   //iterate thru all the rooms (m_rooms) to check if the room of the given name already exists
+  Guard guard(m_lock); // Lock the mutex before checking or modifying m_rooms
 
   std::map<std::string, Room*>::iterator it;
   for(it = m_rooms.begin(); it != m_rooms.end(); it++) {
@@ -259,7 +257,6 @@ Room *Server::find_or_create_room(const std::string &room_name) {
     }    
   }
   //the room doesn't exist, create a new room
-  Guard guard(m_lock); // Lock the mutex
   m_rooms[room_name] = new Room(room_name);
   return m_rooms[room_name];
 }
